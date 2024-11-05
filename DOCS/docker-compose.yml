@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  qa-service:
+    build: .
+    ports:
+      - "8001:8001"  # Search Service
+      - "8002:8002"  # LLM Service
+      - "8003:8003"  # Router Service
+    volumes:
+      - ./models:/app/models  # Монтируем модели
+      - ./cache:/app/cache    # Монтируем кэш
+    environment:
+      - PYTHONUNBUFFERED=1
+    deploy:
+      resources:
+        limits:
+          memory: 16G  # Ограничение памяти
+        reservations:
+          memory: 8G   # Минимальная память
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

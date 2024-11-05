@@ -1,0 +1,20 @@
+# Общие зависимости
+fastapi
+uvicorn
+httpx
+psutil
+requests
+prometheus_client
+
+# Для Search Service
+sentence-transformers
+pandas
+numpy
+torch
+
+# Для LLM Service
+# ctransformers[cuda]  # если у вас NVIDIA GPU
+ctransformers  # если CPU-only версия
+
+# Для Router Service
+pydantic

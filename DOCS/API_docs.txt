@@ -1,0 +1,178 @@
+# API Documentation для проекта поиска и генерации ответов
+
+Проект состоит из трех основных сервисов:
+1. Search Service (порт 8001)
+2. LLM Service (порт 8002) 
+3. Router Service (порт 8003)
+
+# Search Service API
+Поиск документов
+POST http://localhost:8001/search
+
+Request Body:
+
+{
+    "query": "Ваш поисковый запрос",
+    "top_k": 3  // Количество результатов (1-10)
+}
+
+Response:
+[
+    {
+        "document_id": 1,
+        "chunk_id": 0,
+        "score": 0.89,
+        "content": "Текст документа...",
+        "title": "Название документа"
+    }
+]
+
+Проверка здоровья сервиса
+
+GET http://localhost:8001/health
+
+Response:
+{
+    "status": "healthy",
+    "service": "embedding-search",
+    "documents_loaded": 100
+}
+
+# LLM Service API
+Генерация ответа
+POST http://localhost:8002/generate
+
+Request Body:
+
+{
+    "question": "Ваш вопрос",
+    "context": [
+        {
+            "content": "Текст документа",
+            "title": "Название документа"
+        }
+    ]
+}
+Response:
+{
+    "answer": "Сгенерированный ответ",
+    "llm_name": "Название модели",
+    "latency": 1.23
+}
+
+Проверка здоровья сервиса
+
+GET http://localhost:8002/health
+
+Response:
+{
+    "status": "healthy",
+    "service": "llm-inference",
+    "components": {
+        "model": true
+    },
+    "device_info": {
+        "device": "cpu",
+        "cuda_available": false
+    },
+    "model_name": "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
+}
+# Router Service API
+Маршрутизация запросов
+POST http://localhost:8003/route
+
+Request Body:
+
+{
+    "question": "Ваш вопрос"
+}
+
+Response:
+{
+    "answer": "Ответ на вопрос",
+    "llm_name": "Название модели",
+    "latency": 2.34,
+    "sources": [
+        "Название документа 1",
+        "Название документа 2"
+    ]
+}
+
+Проверка здоровья сервиса
+
+GET http://localhost:8003/health
+
+Response:
+{
+    "status": "healthy",
+    "search_service": true,
+    "llm_service": true,
+    "timestamp": 1699123456.789
+}
+
+# Метрики
+
+Все сервисы предоставляют метрики в формате Prometheus:
+GET http://localhost:{port}/metrics
+
+# Параметры конфигурации
+**Search Service**
+CHUNK_SIZE: 512 (размер чанка текста)
+OVERLAP: 0.1 (перекрытие чанков)
+MODEL_NAME: 'all-MiniLM-L6-v2' (модель для эмбеддингов)
+
+**LLM Service**
+MAX_LENGTH: 2048 (максимальная длина ответа)
+TEMPERATURE: 0.5 (температура генерации)
+MODEL_NAME: "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
+
+# Примеры использования
+Python:
+```python
+import requests
+
+# Поиск документов
+search_response = requests.post(
+    "http://localhost:8001/search",
+    json={"query": "What is DeepPiCar?", "top_k": 3}
+)
+
+# Генерация ответа через роутер
+ask_response = requests.post(
+    "http://localhost:8003/ask",
+    json={"question": "What is documents_loaded ?"}
+)
+
+print(ask_response.json())
+```
+
+cURL:
+ 
+## Поиск
+```bash
+curl -X POST "http://localhost:8001/search" \
+     -H "Content-Type: application/json" \
+     -d '{"query": "What is DeepPiCar?", "top_k": 3}'
+```
+## Генерация ответа
+```bash
+curl -X POST "http://localhost:8003/ask" \
+     -H "Content-Type: application/json" \
+     -d '{"question": "What is DeepPiCar?"}'
+```
+
+# Обработка ошибок
+Все сервисы используют стандартные HTTP коды состояния:
+- 200: Успешный запрос
+- 400: Неверный запрос
+- 422: Ошибка валидации
+- 500: Внутренняя ошибка сервера
+- 503: Сервис недоступен
+- 504: Таймаут
+
+# Примечания
+
+Все сервисы поддерживают CORS
+Рекомендуется использовать health-check перед отправкой запросов
+Метрики доступны для мониторинга производительности
+Логи содержат подробную информацию о работе сервисов
